@@ -1,0 +1,10 @@
+# Metadata que nunca queremos en el repo
+**/profiles/**
+**/settings/**
+**/*.profile-meta.xml
+
+# Artefactos locales
+**/jsconfig.json
+**/.eslintrc.json
+.sfdx
+.sf

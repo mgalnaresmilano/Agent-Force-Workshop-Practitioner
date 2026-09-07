@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+
+    <!-- Apex -->
+    <types><members>*</members><name>ApexClass</name></types>
+    <types><members>*</members><name>ApexTrigger</name></types>
+
+    <!-- Lightning Web Components -->
+    <types><members>*</members><name>LightningComponentBundle</name></types>
+
+    <!-- Flows -->
+    <types><members>*</members><name>Flow</name></types>
+    <types><members>*</members><name>FlowDefinition</name></types>
+
+    <!-- Objects & Fields -->
+    <types><members>*</members><name>CustomObject</name></types>
+    <types><members>*</members><name>CustomField</name></types>
+    <types><members>*</members><name>RecordType</name></types>
+    <types><members>*</members><name>ValidationRule</name></types>
+    <types><members>*</members><name>BusinessProcess</name></types>
+    <types><members>*</members><name>CompactLayout</name></types>
+    <types><members>*</members><name>FieldSet</name></types>
+    <types><members>*</members><name>ListView</name></types>
+    <types><members>*</members><name>WebLink</name></types>
+    <types><members>*</members><name>GlobalValueSet</name></types>
+
+    <!-- Layouts & Pages -->
+    <types><members>*</members><name>Layout</name></types>
+    <types><members>*</members><name>FlexiPage</name></types>
+    <types><members>*</members><name>CustomTab</name></types>
+    <types><members>*</members><name>CustomApplication</name></types>
+
+    <!-- Quick Actions -->
+    <types><members>*</members><name>QuickAction</name></types>
+
+    <!-- Security & Access -->
+    <types><members>*</members><name>PermissionSet</name></types>
+    <types><members>*</members><name>PermissionSetGroup</name></types>
+    <types><members>*</members><name>MutingPermissionSet</name></types>
+    <types><members>*</members><name>Profile</name></types>
+    <types><members>*</members><name>Role</name></types>
+    <types><members>*</members><name>Group</name></types>
+    <types><members>*</members><name>SharingRules</name></types>
+    <types><members>*</members><name>CustomPermission</name></types>
+
+    <!-- Static Resources & Content -->
+    <types><members>*</members><name>StaticResource</name></types>
+    <types><members>*</members><name>ContentAsset</name></types>
+    <types><members>*</members><name>Document</name></types>
+
+    <!-- Custom Labels -->
+    <types><members>*</members><name>CustomLabel</name></types>
+
+    <!-- Email & Reports -->
+    <types><members>*</members><name>EmailTemplate</name></types>
+    <types><members>*</members><name>Report</name></types>
+    <types><members>*</members><name>Dashboard</name></types>
+
+    <!-- Messaging -->
+    <types><members>*</members><name>LightningMessageChannel</name></types>
+
+    <!-- Platform Events -->
+    <types><members>*</members><name>PlatformEventChannel</name></types>
+    <types><members>*</members><name>PlatformEventChannelMember</name></types>
+
+    <!-- Named Credentials & Connected Apps -->
+    <types><members>*</members><name>NamedCredential</name></types>
+    <types><members>*</members><name>ConnectedApp</name></types>
+    <types><members>*</members><name>ExternalCredential</name></types>
+
+    <!-- Decision Tables -->
+    <types><members>*</members><name>DecisionTable</name></types>
+    <types><members>*</members><name>DecisionTableDatasetLink</name></types>
+
+    <!-- Revenue Cloud — Context Service -->
+    <types><members>*</members><name>ContextDefinition</name></types>
+
+    <!-- Revenue Cloud — Pricing & Procedures -->
+    <types><members>*</members><name>ExpressionSetDefinition</name></types>
+    <types><members>*</members><name>ExpressionSetObjectAlias</name></types>
+
+    <!-- Revenue Cloud — Document Generation (CLM / DocGen) -->
+    <types><members>*</members><name>DocumentTemplate</name></types>
+
+    <!-- Approvals -->
+    <types><members>*</members><name>ApprovalProcess</name></types>
+
+    <!-- AI / Agentforce -->
+    <types><members>*</members><name>GenAiPlugin</name></types>
+    <types><members>*</members><name>GenAiFunction</name></types>
+    <types><members>*</members><name>GenAiPlannerBundle</name></types>
+    <types><members>*</members><name>GenAiPromptTemplate</name></types>
+    <types><members>*</members><name>AiAuthoringBundle</name></types>
+    <types><members>*</members><name>Bot</name></types>
+    <types><members>*</members><name>BotVersion</name></types>
+
+    <!-- Experience Cloud -->
+    <types><members>*</members><name>Network</name></types>
+    <types><members>*</members><name>NavigationMenu</name></types>
+    <types><members>*</members><name>ExperienceBundle</name></types>
+
+    <!-- Workflows (legacy) -->
+    <types><members>*</members><name>Workflow</name></types>
+
+    <version>66.0</version>
+</Package>
