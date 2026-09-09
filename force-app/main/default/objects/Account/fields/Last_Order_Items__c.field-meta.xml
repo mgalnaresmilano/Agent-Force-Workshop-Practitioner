@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Last_Order_Items__c</fullName>
+    <label>Last Order Items</label>
+    <type>LongTextArea</type>
+    <length>1000</length>
+    <visibleLines>3</visibleLines>
+    <required>false</required>
+    <description>Articulos del ultimo pedido del cliente Pronto.</description>
+    <trackHistory>false</trackHistory>
+</CustomField>
