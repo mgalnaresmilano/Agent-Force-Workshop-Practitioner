@@ -1,0 +1,14 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Agent Script (.agent) requires tab-only indentation.
+# Agent Builder 2.0 rejects space-indented files with PARSE_EXCEPTION.
+[*.agent]
+indent_style = tab
+trim_trailing_whitespace = true
+insert_final_newline = true

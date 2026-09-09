@@ -1,0 +1,215 @@
+# Agente Pronto
+# ================
+# Agente de servicio (NGA / Agent Builder 2.0) para Pronto, plataforma de
+# reparto de comida a domicilio en Espana.
+#
+# Capacidades:
+#   1. GeneralFAQ (OOTB): responde dudas de politicas y servicio fundamentado
+#      en la Agentforce Data Library "Pronto FAQ y Politicas" (retriever
+#      File_Pronto_FAQ_Politicas), que se asocia al agente en Agent Builder 2.0.
+#   2. donde_esta_mi_pedido (custom): resuelve "Donde esta mi pedido?" leyendo
+#      los campos Last_Order_* de la Person Account via apex://ProntoOrderLookup.
+
+config:
+	developer_name: "Agente_Pronto"
+	agent_label: "Agente Pronto"
+	description: "Asistente de atencion al cliente de Pronto: resuelve dudas de politicas y servicio y consulta el estado del pedido del cliente."
+	default_agent_user: "pronotserviceagent092026090344963662@example.com"
+
+variables:
+	EndUserId: linked string
+		source: @MessagingSession.MessagingEndUserId
+		description: "Messaging End User ID"
+		visibility: "External"
+	RoutableId: linked string
+		source: @MessagingSession.Id
+		description: "Messaging Session ID"
+		visibility: "External"
+	identificador_cliente: mutable string = ""
+		description: "Email o Pronto Customer Id proporcionado por el cliente"
+		visibility: "Internal"
+	cliente_identificado: mutable boolean = False
+		description: "Indica si el cliente ha sido localizado"
+		visibility: "Internal"
+	estado_pedido: mutable string = ""
+		description: "Codigo de estado del ultimo pedido"
+		visibility: "Internal"
+	pedido_id: mutable string = ""
+		description: "Id del ultimo pedido"
+		visibility: "Internal"
+
+system:
+	instructions: |
+		Eres el "Agente Pronto", el asistente virtual de atencion al cliente de Pronto, una plataforma de reparto de comida a domicilio que opera en las principales ciudades de Espana.
+		Eres una inteligencia artificial; si el cliente te pregunta si eres humano, indicalo con transparencia.
+		Responde siempre en espanol, con un tono cercano, claro y conciso.
+		Ayudas con dos cosas: (1) dudas sobre las politicas y el servicio de Pronto, y (2) el estado del pedido del cliente.
+		No respondas preguntas ajenas a Pronto ni inventes informacion: usa unicamente los resultados de las acciones y la informacion de los articulos de conocimiento.
+		Nunca garantices la ausencia total de un alergeno; remite siempre a la ficha del restaurante y recomienda indicar las alergias graves en las notas del pedido.
+		Para incidencias que requieran intervencion humana (cobro erroneo, problema con el repartidor o reclamacion formal), escala a un agente humano.
+	messages:
+		welcome: "Hola, soy el Agente Pronto. Puedo ayudarte con dudas sobre nuestro servicio o con el estado de tu pedido. Como puedo ayudarte?"
+		error: "Lo siento, ha ocurrido un problema. Voy a intentarlo de nuevo."
+
+connection messaging:
+	adaptive_response_allowed: True
+
+knowledge:
+	rag_feature_config_id: ""
+	citations_enabled: True
+	citations_url: ""
+
+language:
+	default_locale: "es"
+	additional_locales: ""
+	all_additional_locales: False
+
+start_agent topic_selector:
+	description: "Enruta cada peticion del cliente al topic adecuado"
+	reasoning:
+		instructions: |
+			You are a router only. Do NOT answer questions or provide help directly.
+			Route every request to the correct topic immediately using a transition action:
+			- Dudas sobre politicas, zonas y horarios, tiempos de entrega, cancelaciones, reembolsos, alergenos, metodos de pago o el programa de fidelizacion Pronto Rewards -> use to_faq
+			- Preguntas del tipo "donde esta mi pedido", estado del pedido o seguimiento del envio -> use to_pedido
+			Never attempt to help the user yourself. Always route.
+		actions:
+			to_faq: @utils.transition to @topic.GeneralFAQ
+				description: "Dudas sobre politicas y servicio de Pronto"
+			to_pedido: @utils.transition to @topic.donde_esta_mi_pedido
+				description: "Estado o seguimiento del pedido del cliente"
+
+topic donde_esta_mi_pedido:
+	label: "Donde esta mi pedido"
+	description: "Localiza al cliente por email o Pronto Customer Id y le informa del estado de su ultimo pedido, aplicando las politicas de Pronto."
+
+	actions:
+		consultar_pedido:
+			description: "Consulta el ultimo pedido de un cliente Pronto por email o Pronto Customer Id."
+			target: "apex://ProntoOrderLookup"
+			inputs:
+				identificador: string
+					description: "Email del cliente o Pronto Customer Id (por ejemplo PA-1003)."
+					is_required: True
+					is_user_input: True
+			outputs:
+				encontrado: boolean
+					description: "Indica si se ha localizado al cliente."
+				nombreCliente: string
+					description: "Nombre del cliente."
+					is_displayable: True
+				pedidoId: string
+					description: "Id del pedido."
+					is_displayable: True
+				restaurante: string
+					description: "Restaurante del pedido."
+					is_displayable: True
+				articulos: string
+					description: "Articulos del pedido."
+					is_displayable: True
+				estado: string
+					description: "Codigo de estado: preparing, in_transit, delivered o cancelled."
+				estadoTexto: string
+					description: "Estado del pedido en texto legible."
+					is_displayable: True
+				totalEur: string
+					description: "Importe total del pedido en euros."
+					is_displayable: True
+				fechaPedido: string
+					description: "Fecha del pedido."
+					is_displayable: True
+				nivelFidelidad: string
+					description: "Nivel de Pronto Rewards del cliente."
+				mensaje: string
+					description: "Mensaje resumen del pedido listo para mostrar."
+					is_displayable: True
+
+	reasoning:
+		instructions: |
+			Tu tarea es informar al cliente del estado de su ultimo pedido en Pronto.
+			Paso 1: Si aun no tienes su email o su Pronto Customer Id, pideselo (por ejemplo: PA-1003). Necesitas uno de los dos para identificarlo.
+			Paso 2: Usa la accion buscar_pedido con ese identificador para recuperar los datos del pedido. No inventes nunca datos: usa exclusivamente el resultado de la accion.
+			Paso 3: Si encontrado es falso, informa con amabilidad de que no has localizado el pedido y pide que verifique el email o el Pronto Customer Id.
+			Paso 4: Si encontrado es verdadero, comunica el estado usando estadoTexto e incluye el restaurante y el importe. Aplica estas politicas segun el estado:
+			- Si estado es "preparing": el cliente puede cancelar sin coste solo si no han pasado mas de 3 minutos desde la confirmacion y el pedido sigue en preparacion.
+			- Si estado es "in_transit": el pedido ya no admite cancelacion salvo incidencia. Tiempos estimados: 30-45 min estandar, 45-60 min en hora punta (14:00-15:30 y 21:00-22:30) y 20-30 min con Pronto Express. Si el pedido supera en mas de 20 minutos el tiempo estimado, ofrece proactivamente un cupon de 5 EUR para el proximo pedido.
+			- Si estado es "delivered": si el cliente indica que el pedido llego incorrecto o incompleto, informa de que el reembolso se tramita en 3 a 5 dias habiles al metodo de pago original. Si el pedido no se entrego, el reembolso es integro y automatico.
+			- Si estado es "cancelled": explica que el pedido fue cancelado y ofrecele ayuda para repetir el pedido.
+			Paso 5: Si el cliente menciona un cobro erroneo, un problema con el repartidor o una reclamacion formal, escala a un agente humano con la accion escalar. El canal de soporte humano es el chat de la app, de 9:00 a 00:00.
+		actions:
+			buscar_pedido: @actions.consultar_pedido
+				description: "Busca el ultimo pedido del cliente por email o Pronto Customer Id"
+				with identificador = ...
+				set @variables.cliente_identificado = @outputs.encontrado
+				set @variables.estado_pedido = @outputs.estado
+				set @variables.pedido_id = @outputs.pedidoId
+			escalar: @utils.escalate
+				description: "Transfiere la conversacion a un agente humano para incidencias graves"
+
+topic GeneralFAQ:
+	label: "Preguntas frecuentes"
+	description: "Responde preguntas del cliente sobre las politicas, el servicio y los procedimientos de Pronto buscando en los articulos de conocimiento de la Data Library."
+
+	reasoning:
+		instructions: ->
+			| Tu unica funcion es ayudar y responder preguntas sobre Pronto, su servicio, sus procedimientos o sus politicas buscando en los articulos de conocimiento.
+			| Si la pregunta del cliente es demasiado vaga o general, pide mas detalles y aclaraciones para dar una mejor respuesta.
+			| Si no puedes ayudar al cliente ni siquiera tras pedir aclaraciones, preguntale si quiere escalar la incidencia a un agente humano.
+			| Nunca ofrezcas informacion, consejos o pasos genericos que no procedan de la busqueda en los articulos de conocimiento.
+			| Nunca garantices la ausencia total de un alergeno: remite siempre a la ficha del restaurante.
+			| Incluye las fuentes en tu respuesta cuando esten disponibles en los articulos de conocimiento; si no, continua sin ellas.
+
+		actions:
+			AnswerQuestionsWithKnowledge: @actions.AnswerQuestionsWithKnowledge
+				with query = ...
+				with citationsUrl = ...
+				with ragFeatureConfigId = ...
+				with citationsEnabled = ...
+
+	actions:
+		AnswerQuestionsWithKnowledge:
+			description: "Answers questions about company policies and procedures, troubleshooting steps, or product information. For example: 'What is your return policy?' 'How do I fix an issue?' or 'What features does a product have?'"
+			inputs:
+				query: string
+					description: "Required. A string created by generative AI to be used in the knowledge article search."
+					label: "Query"
+					is_required: True
+					is_user_input: True
+					complex_data_type_name: "lightning__textType"
+				citationsUrl: string = @knowledge.citations_url
+					description: "The URL to use for citations for custom Agents."
+					label: "Citations Url"
+					is_required: False
+					is_user_input: True
+					complex_data_type_name: "lightning__textType"
+				ragFeatureConfigId: string = @knowledge.rag_feature_config_id
+					description: "The RAG Feature ID to use for grounding this copilot action invocation."
+					label: "RAG Feature Configuration Id"
+					is_required: False
+					is_user_input: True
+					complex_data_type_name: "lightning__textType"
+				citationsEnabled: boolean = @knowledge.citations_enabled
+					description: "Whether or not citations are enabled."
+					label: "Citations Enabled"
+					is_required: False
+					is_user_input: True
+					complex_data_type_name: "lightning__booleanType"
+			outputs:
+				knowledgeSummary: object
+					description: "A string formatted as rich text that includes a summary of the information retrieved from the knowledge articles and citations to those articles."
+					label: "Knowledge Summary"
+					complex_data_type_name: "lightning__richTextType"
+					filter_from_agent: False
+					is_displayable: True
+				citationSources: object
+					description: "Source links for the chunks in the hydrated prompt that's used by the planner service."
+					label: "Citation Sources"
+					complex_data_type_name: "@apexClassType/AiCopilot__GenAiCitationInput"
+					filter_from_agent: False
+					is_displayable: False
+			target: "standardInvocableAction://streamKnowledgeSearch"
+			label: "Answer Questions with Knowledge"
+			require_user_confirmation: False
+			include_in_progress_indicator: True
+			progress_indicator_message: "Getting answers"
+			source: "EmployeeCopilot__AnswerQuestionsWithKnowledge"
